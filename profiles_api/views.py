@@ -6,6 +6,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework import filters
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.settings import api_settings
+from rest_framework.permissions import IsAuthenticated
 
 from profiles_api import serializers
 from profiles_api import models
@@ -135,3 +136,18 @@ class UserLoginApiView(ObtainAuthToken):
 
     renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES # have to add this across so it is visible on django's
                                                             # browsable api page. This would help for better visuals
+
+class UserProfileFeedViewSet(viewsets.ModelViewSet):
+    """ Handles creating, reading and updating profile feed items """
+    authentication_classes = (TokenAuthentication,)
+    serializer_class = serializers.ProfileFeedItemSerializer
+    queryset = models.ProfileFeedItem.objects.all()
+    permission_classes = (
+        permissions.UpdateOwnStatus ,
+        IsAuthenticated # Can only make feed when logged in
+    )
+
+    def perform_create(self, serializer):
+        """ Sets the user to profile to logged in user """
+        serializer.save(user_profile = self.request.user)
+
